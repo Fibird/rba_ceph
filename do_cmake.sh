@@ -13,7 +13,7 @@ fi
 mkdir build
 cd build
 NPROC=${NPROC:-$(nproc)}
-cmake -DBOOST_J=$NPROC $ARGS "$@" ..
+cmake -DBOOST_J=$NPROC  -DALLOCATOR=libc $ARGS "$@" ..
 
 # minimal config to find plugins
 cat <<EOF > ceph.conf

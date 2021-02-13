@@ -152,6 +152,7 @@ if [ x`uname`x = xFreeBSDx ]; then
 	security/oath-toolkit \
         sysutils/flock \
         sysutils/fusefs-libs \
+        devel/liboath \
 
 	# Now use pip to install some extra python modules
 	pip install pecan
