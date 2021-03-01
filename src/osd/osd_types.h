@@ -45,6 +45,7 @@
 #include "librados/ListObjectImpl.h"
 #include "compressor/Compressor.h"
 #include <atomic>
+#include <dmclock/src/dmclock_server.h>
 
 #define CEPH_OSD_ONDISK_MAGIC "ceph osd volume v026"
 
@@ -1406,6 +1407,7 @@ public:
   double qos_res;
   double qos_wgt;
   double qos_lim;
+  ClientType qos_ctype;
 
 private:
   vector<uint32_t> grade_table;

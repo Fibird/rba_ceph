@@ -4130,7 +4130,7 @@ namespace {
     COMPRESSION_MODE, COMPRESSION_ALGORITHM, COMPRESSION_REQUIRED_RATIO,
     COMPRESSION_MAX_BLOB_SIZE, COMPRESSION_MIN_BLOB_SIZE,
     CSUM_TYPE, CSUM_MAX_BLOCK, CSUM_MIN_BLOCK,
-    QOS_RES, QOS_WGT, OQS_LIM };
+    QOS_RES, QOS_WGT, QOS_LIM, QOS_CTYPE };
 
   std::set<osd_pool_get_choices>
     subtract_second_from_first(const std::set<osd_pool_get_choices>& first,
@@ -4759,7 +4759,7 @@ bool OSDMonitor::preprocess_command(MonOpRequestRef op)
       {"csum_type", CSUM_TYPE},
       {"csum_max_block", CSUM_MAX_BLOCK},
       {"csum_min_block", CSUM_MIN_BLOCK},
-      {"qos_res", QOS_RES}, {"qos_wgt", QOS_WGT}, {"qos_lim", OQS_LIM},
+      {"qos_res", QOS_RES}, {"qos_wgt", QOS_WGT}, {"qos_lim", QOS_LIM}, {"qos_ctype", QOS_CTYPE}
     };
 
     typedef std::set<osd_pool_get_choices> choices_set_t;
@@ -4987,8 +4987,11 @@ bool OSDMonitor::preprocess_command(MonOpRequestRef op)
 	  case QOS_WGT:
 	    f->dump_float("qos_wgt", p->get_qos_wgt());
 	    break;
-	  case OQS_LIM:
+	  case QOS_LIM:
 	    f->dump_float("qos_lim", p->get_qos_lim());
+	    break;
+	  case QOS_CTYPE:
+	    f->dump_enum("qos_ctype", p->get_qos_ctype());
 	    break;
 	}
       }
@@ -5154,8 +5157,11 @@ bool OSDMonitor::preprocess_command(MonOpRequestRef op)
 	  case QOS_WGT:
 	    ss << "qos_wgt: " << p->get_qos_wgt() << "\n";
 	    break;
-	  case OQS_LIM:
+	  case QOS_LIM:
 	    ss << "qos_lim: " << p->get_qos_lim() << "\n";
+	    break;
+	  case QOS_CTYPE:
+	    ss << "qos_ctype: " << p->get_qos_ctype() << "\n";
 	    break;
 	}
 	rdata.append(ss.str());
@@ -6459,6 +6465,7 @@ int OSDMonitor::prepare_new_pool(string& name, uint64_t auid,
   pi->qos_res = g_conf->get_val<double>("osd_pool_default_mclock_res");
   pi->qos_wgt = g_conf->get_val<double>("osd_pool_default_mclock_wgt");
   pi->qos_lim = g_conf->get_val<double>("osd_pool_default_mclock_lim");
+  pi->qos_ctype = g_conf->get_val<double>("osd_pool_default_mclock_ctype");
   pending_inc.new_pool_names[pool] = name;
   return 0;
 }
@@ -6987,6 +6994,12 @@ int OSDMonitor::prepare_command_pool_set(const cmdmap_t& cmdmap,
       return -EINVAL;
     }
     p.set_qos_lim(f);
+  } else if (var == "qos_ctype") {
+    if (interr.length()) {
+      ss << "error parsing int value '" << val << "': " << interr;
+      return -EINVAL;
+    }
+    p.set_qos_ctype(f);
   } else {
     ss << "unrecognized variable '" << var << "'";
     return -EINVAL;
