@@ -1246,7 +1246,7 @@ void pg_pool_t::dump(Formatter *f) const
   f->dump_float("qos_res", get_qos_res());
   f->dump_float("qos_wgt", get_qos_wgt());
   f->dump_float("qos_lim", get_qos_lim());
-  f->dump_enum("qos_ctype", get_qos_ctype());
+  f->dump_int("qos_ctype", get_qos_ctype());
 }
 
 void pg_pool_t::convert_to_pg_shards(const vector<int> &from, set<pg_shard_t>* to) const {
@@ -1275,7 +1275,7 @@ double pg_pool_t::get_qos_lim() const
   return qos_lim;
 }
 
-ClientType pg_pool_t::get_qos_ctype() const
+int pg_pool_t::get_qos_ctype() const
 {
     return qos_ctype;
 }
@@ -1295,7 +1295,7 @@ void pg_pool_t::set_qos_lim(double l)
   qos_lim = l;
 }
 
-void pg_pool_t::set_qos_ctype(ClientType ct)
+void pg_pool_t::set_qos_ctype(int ct)
 {
   qos_ctype = ct;
 }
@@ -1965,7 +1965,7 @@ pg_pool_t::pg_pool_t() :
   qos_res(OSD_POOL_DEFAULT_MCLOCK_RES),
   qos_wgt(OSD_POOL_DEFAULT_MCLOCK_WGT),
   qos_lim(OSD_POOL_DEFAULT_MCLOCK_LIM),
-  qos_ctype(OSD_POOL_DEFALUT_MCLOCK_CTYPE)
+  qos_ctype(OSD_POOL_DEFAULT_MCLOCK_CTYPE)
 { }
 
 ostream& operator<<(ostream& out, const pg_pool_t& p)
@@ -2032,7 +2032,7 @@ ostream& operator<<(ostream& out, const pg_pool_t& p)
   }
   out << " qos_res " << p.get_qos_res()
       << " qos_wgt " << p.get_qos_wgt()
-      << " qos_lim " << p.get_qos_lim();
+      << " qos_lim " << p.get_qos_lim()
       << " qos_ctype " << p.get_qos_ctype();
   return out;
 }

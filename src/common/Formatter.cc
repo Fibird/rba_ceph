@@ -261,11 +261,6 @@ void JSONFormatter::dump_int(const char *name, int64_t s)
   m_ss << s;
 }
 
-void JSONFormatter::dump_enum(const char *name, int e) {
-    print_name(name);
-    m_ss << e;
-}
-
 void JSONFormatter::dump_float(const char *name, double d)
 {
   print_name(name);
