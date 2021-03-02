@@ -4991,7 +4991,7 @@ bool OSDMonitor::preprocess_command(MonOpRequestRef op)
 	    f->dump_float("qos_lim", p->get_qos_lim());
 	    break;
 	  case QOS_CTYPE:
-	    f->dump_enum("qos_ctype", p->get_qos_ctype());
+	    f->dump_int("qos_ctype", p->get_qos_ctype());
 	    break;
 	}
       }
