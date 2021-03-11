@@ -99,7 +99,8 @@ namespace crimson {
 	limit(_limit),
 	reservation_inv(0.0 == reservation ? 0.0 : 1.0 / reservation),
 	weight_inv(     0.0 == weight      ? 0.0 : 1.0 / weight),
-	limit_inv(      0.0 == limit       ? 0.0 : 1.0 / limit)
+	limit_inv(      0.0 == limit       ? 0.0 : 1.0 / limit),
+	client_type(ClientType::A)
       {
 	// empty
       }
@@ -349,6 +350,8 @@ namespace crimson {
 	uint32_t			  r0_counter = 0; 
 	// burst request counter
 	uint32_t			  b_counter = 0;
+	// burst slice: t = resource * win_size / limit
+	Time burst_slice = 1.0;
 
 	ClientRec(C _client,
 		  const ClientInfo* _info,
@@ -472,6 +475,11 @@ namespace crimson {
 
 	  return out;
 	}
+	void update_burst_slice(double win_size) {
+	    if (info->client_type == ClientType::B) {
+	        burst_slice = resource * win_size * info->limit_inv;
+	    }
+	}
       }; // class ClientRec
 
       using ClientRecRef = std::shared_ptr<ClientRec>;
@@ -519,8 +527,10 @@ namespace crimson {
 
 
       bool empty() const {
+          // TODO: to be modified
 	DataGuard g(data_mtx);
 	return (resv_heap.empty() || ! resv_heap.top().has_request());
+	//return (ready_heap.empty() || ! ready_heap.top().has_request());
       }
 
 
@@ -531,6 +541,7 @@ namespace crimson {
 
 
       size_t request_count() const {
+          // TODO: to be modified
 	DataGuard g(data_mtx);
 	size_t total = 0;
 	for (auto i = resv_heap.cbegin(); i != resv_heap.cend(); ++i) {
@@ -820,7 +831,8 @@ namespace crimson {
 	finishing(false),
 	idle_age(std::chrono::duration_cast<Duration>(_idle_age)),
 	erase_age(std::chrono::duration_cast<Duration>(_erase_age)),
-	check_time(std::chrono::duration_cast<Duration>(_check_time))
+	check_time(std::chrono::duration_cast<Duration>(_check_time)),
+	system_capacity(40)
       {
 	assert(_erase_age >= _idle_age);
 	assert(_check_time < _idle_age);
@@ -875,6 +887,8 @@ namespace crimson {
 			  const Time time,
 			  const double cost = 0.0) {
 	++tick;
+    // update clients' resource
+    update_client_res();
 
 	// this pointer will help us create a reference to a shared
 	// pointer, no matter which of two codepaths we take
@@ -896,7 +910,7 @@ namespace crimson {
 	  client_map[client_id] = client_rec;
 	  temp_client = &(*client_rec); // address of obj of shared_ptr
 	}
-
+	temp_client->update_burst_slice(win_size);
 	// for convenience, we'll create a reference to the shared pointer
 	ClientRec& client = *temp_client;
 
@@ -1045,16 +1059,16 @@ namespace crimson {
 	ready_heap.demote(top);
 
 	if (now - win_start < win_size) {
-		if (top.info->client_type == ClientType::B) {
-			top.b_counter++;
-		}
+//		if (top.info->client_type == ClientType::B) {
+//			top.b_counter++;
+//		}
 		if (top.info->client_type == ClientType::R) {
 			top.r0_counter++;
 		}
 	} else {
-		if (top.info->client_type == ClientType::B) {
-			top.b_counter = 0;
-		}
+//		if (top.info->client_type == ClientType::B) {
+//			top.b_counter = 0;
+//		}
 		if (top.info->client_type == ClientType::R) {
 			top.r0_counter = 0;
 		}
@@ -1095,8 +1109,6 @@ namespace crimson {
 
       // data_mtx should be held when called
       NextReq do_next_request(Time now) {
-          // update clients' resource
-          update_client_res();
 	// if reservation queue is empty, all are empty (i.e., no
 	// active clients)
 	if(resv_heap.empty()) {
@@ -1106,15 +1118,16 @@ namespace crimson {
 	// try constraint (reservation) based scheduling
 
 	auto& reserv = resv_heap.top();
-	if (reserv.has_request() &&
+	if (reserv.info->client_type == ClientType::R &&
+	    reserv.has_request() &&
 	    reserv.next_request().tag.reservation <= now) {
 	  return NextReq(HeapId::reservation);
 	}
 
-	if (reserv.has_request() &&
-	    reserv.r0_counter < (reserv.resource - reserv.info->reservation) * win_size) {
-	  return NextReq(HeapId::reservation);
-	}
+//	if (reserv.has_request() &&
+//	    reserv.r0_counter < (reserv.resource - reserv.info->reservation) * win_size) {
+//	  return NextReq(HeapId::reservation);
+//	}
 
 	// no existing reservations before now, so try weight-based
 	// scheduling
@@ -1134,11 +1147,27 @@ namespace crimson {
 
 	// try burst based scheduling
 	auto& readys = ready_heap.top();
-	if (readys.b_counter < readys.resource * win_size) {
-		return NextReq(HeapId::ready);
-	}
+//	if (readys.b_counter < readys.resource * win_size) {
+//		return NextReq(HeapId::ready);
+//	}
+    if (readys.info->client_type == ClientType::B) {
+        if ((now - win_start) < readys.burst_slice &&
+            readys.has_request() &&
+            readys.next_request().tag.ready &&
+            readys.next_request().tag.proportion < max_tag) {
+            return NextReq(HeapId::ready);
+        }
+    }
+
+    if (readys.info->client_type == ClientType::R &&
+        readys.has_request() &&
+        readys.r0_counter < (readys.resource - readys.info->reservation) * win_size) {
+        return NextReq(HeapId::ready);
+    }
+
 	//auto& readys = ready_heap.top();
-	if (readys.has_request() &&
+	if (readys.info->client_type == ClientType::A &&
+	    readys.has_request() &&
 	    readys.next_request().tag.ready &&
 	    readys.next_request().tag.proportion < max_tag) {
 	  return NextReq(HeapId::ready);
@@ -1263,13 +1292,13 @@ namespace crimson {
 	  }
 
 	  size_t get_client_num() {
-          return client_map.count();
+          return client_map.size();
       }
 
       void update_client_res() {
-          assert(client_count() != 0 && system_capacity > 0.0);
+          int client_num = get_client_num() == 0 ? 1 : get_client_num();
           for (auto c: client_map) {
-              c.second->resource = system_capacity / (double) client_count();
+              c.second->resource = system_capacity / (double) client_num;
           }
       }
     }; // class PriorityQueueBase
@@ -1581,6 +1610,25 @@ namespace crimson {
 	sched_ahead_thd = std::thread(&PushPriorityQueue::run_sched_ahead, this);
       }
 
+        template<typename Rep, typename Per>
+        PushPriorityQueue(typename super::ClientInfoFunc _client_info_f,
+                          CanHandleRequestFunc _can_handle_f,
+                          HandleRequestFunc _handle_f,
+                          std::chrono::duration<Rep,Per> _idle_age,
+                          std::chrono::duration<Rep,Per> _erase_age,
+                          std::chrono::duration<Rep,Per> _check_time,
+                          double _system_capacity,
+                          bool _allow_limit_break = false,
+                          double anticipation_timeout = 0.0) :
+                super(_client_info_f,
+                      _idle_age, _erase_age, _check_time, _system_capacity,
+                      _allow_limit_break, anticipation_timeout)
+        {
+            can_handle_f = _can_handle_f;
+            handle_f = _handle_f;
+            sched_ahead_thd = std::thread(&PushPriorityQueue::run_sched_ahead, this);
+        }
+
 
       // push convenience constructor
       PushPriorityQueue(typename super::ClientInfoFunc _client_info_f,
@@ -1600,6 +1648,24 @@ namespace crimson {
 	// empty
       }
 
+        PushPriorityQueue(typename super::ClientInfoFunc _client_info_f,
+                          CanHandleRequestFunc _can_handle_f,
+                          HandleRequestFunc _handle_f,
+                          double _system_capacity,
+                          bool _allow_limit_break = false,
+                          double _anticipation_timeout = 0.0) :
+                PushPriorityQueue(_client_info_f,
+                                  _can_handle_f,
+                                  _handle_f,
+                                  std::chrono::minutes(10),
+                                  std::chrono::minutes(15),
+                                  std::chrono::minutes(6),
+                                  _system_capacity,
+                                  _allow_limit_break,
+                                  _anticipation_timeout)
+        {
+            // empty
+        }
 
       ~PushPriorityQueue() {
 	this->finishing = true;
