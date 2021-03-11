@@ -4880,6 +4880,10 @@ std::vector<Option> get_global_options() {
     Option("debug_asserts_on_shutdown", Option::TYPE_BOOL,Option::LEVEL_DEV)
     .set_default(false)
     .set_description("Enable certain asserts to check for refcounting bugs on shutdown; see http://tracker.ceph.com/issues/21738"),
+
+    Option("osd_server_system_capacity", Option::TYPE_FLOAT, Option::LEVEL_DEV)
+            .set_default(3000.0)
+            .set_description("set system capacity for osd server."),
   });
 }
 

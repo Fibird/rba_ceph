@@ -35,7 +35,7 @@ namespace ceph {
    */
 
   mClockPoolQueue::mClockPoolQueue(CephContext *cct) :
-    queue(std::bind(&mClockPoolQueue::op_class_client_info_f, this, _1)),
+    queue(std::bind(&mClockPoolQueue::op_class_client_info_f, this, _1), cct->_conf->osd_server_system_capacity),
     client_info_mgr(cct),
     service(nullptr)
   {

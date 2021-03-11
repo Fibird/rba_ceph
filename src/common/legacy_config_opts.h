@@ -1520,3 +1520,6 @@ OPTION(rgw_max_objs_per_shard, OPT_INT)
 OPTION(rgw_reshard_thread_interval, OPT_U32) // maximum time between rounds of reshard thread processing
 
 OPTION(rgw_acl_grants_max_num, OPT_INT) // According to AWS S3(http://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html), An ACL can have up to 100 grants.
+
+/* rba fair configs */
+OPTION(osd_server_system_capacity, OPT_DOUBLE)
