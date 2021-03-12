@@ -48,7 +48,8 @@ namespace ceph {
 		    cct->_conf->osd_op_queue_mclock_peering_event_lim),
       pool_default(cct->_conf->get_val<double>("osd_pool_default_mclock_res"),
 		   cct->_conf->get_val<double>("osd_pool_default_mclock_wgt"),
-		   cct->_conf->get_val<double>("osd_pool_default_mclock_lim")),
+		   cct->_conf->get_val<double>("osd_pool_default_mclock_lim"),
+		   dmc::ClientType(cct->_conf->get_val<int64_t>("osd_pool_default_mclock_ctype"))),
       lock("OpClassClientInfoMgr::lock")
     {
       constexpr int rep_ops[] = {

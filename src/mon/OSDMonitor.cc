@@ -6465,7 +6465,7 @@ int OSDMonitor::prepare_new_pool(string& name, uint64_t auid,
   pi->qos_res = g_conf->get_val<double>("osd_pool_default_mclock_res");
   pi->qos_wgt = g_conf->get_val<double>("osd_pool_default_mclock_wgt");
   pi->qos_lim = g_conf->get_val<double>("osd_pool_default_mclock_lim");
-  pi->qos_ctype = g_conf->get_val<double>("osd_pool_default_mclock_ctype");
+  pi->qos_ctype = g_conf->get_val<int64_t>("osd_pool_default_mclock_ctype");
   pending_inc.new_pool_names[pool] = name;
   return 0;
 }
