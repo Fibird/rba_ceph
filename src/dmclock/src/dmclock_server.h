@@ -269,6 +269,7 @@ namespace crimson {
     class PriorityQueueBase {
       // we don't want to include gtest.h just for FRIEND_TEST
       friend class dmclock_server_client_idle_erase_Test;
+      friend class dmclock_server_client_resource_update_Test;
 
     public:
 
@@ -616,6 +617,8 @@ namespace crimson {
 //#if USE_PROP_HEAP
 	prop_heap.adjust(*i->second);
 //#endif
+    reduce_total_wgt(i->second->info->weight);
+    update_client_res();
       }
 
 
@@ -629,7 +632,10 @@ namespace crimson {
 	auto client_it = client_map.find(client_id);
 	if (client_map.end() != client_it) {
 	  ClientRec& client = (*client_it->second);
+	  reduce_total_wgt(client.info->weight);
 	  client.info = client_info_f(client_id);
+	  add_total_wgt(client.info->weight);
+	  update_client_res();
 	}
       }
 
@@ -839,7 +845,8 @@ namespace crimson {
 	idle_age(std::chrono::duration_cast<Duration>(_idle_age)),
 	erase_age(std::chrono::duration_cast<Duration>(_erase_age)),
 	check_time(std::chrono::duration_cast<Duration>(_check_time)),
-	system_capacity(40)
+	system_capacity(40),
+	win_size(30)
       {
 	assert(_erase_age >= _idle_age);
 	assert(_check_time < _idle_age);
@@ -856,7 +863,8 @@ namespace crimson {
                           std::chrono::duration<Rep,Per> _check_time,
                           bool _allow_limit_break,
                           double _anticipation_timeout,
-                          double _system_capacity) :
+                          double _system_capacity,
+                          double _mclock_win_size) :
                 client_info_f(_client_info_f),
                 allow_limit_break(_allow_limit_break),
                 anticipation_timeout(_anticipation_timeout),
@@ -864,7 +872,8 @@ namespace crimson {
                 idle_age(std::chrono::duration_cast<Duration>(_idle_age)),
                 erase_age(std::chrono::duration_cast<Duration>(_erase_age)),
                 check_time(std::chrono::duration_cast<Duration>(_check_time)),
-                system_capacity(_system_capacity)
+                system_capacity(_system_capacity),
+                win_size(_mclock_win_size)
         {
             assert(_erase_age >= _idle_age);
             assert(_check_time < _idle_age);
@@ -894,8 +903,6 @@ namespace crimson {
 			  const Time time,
 			  const double cost = 0.0) {
 	++tick;
-    // update clients' resource
-    update_client_res();
 
 	// this pointer will help us create a reference to a shared
 	// pointer, no matter which of two codepaths we take
@@ -922,6 +929,8 @@ namespace crimson {
       }
 	  client_map[client_id] = client_rec;
 	  add_total_wgt(info->weight);
+      // update clients' resource
+      update_client_res();
 	  temp_client = &(*client_rec); // address of obj of shared_ptr
 	}
 	temp_client->update_burst_slice(win_size);
@@ -1284,6 +1293,7 @@ namespace crimson {
 	      delete_from_heaps(i2->second);
 	      client_map.erase(i2);
 	      reduce_total_wgt(i2->second->info->weight);
+	      update_client_res();
 	    } else if (idle_point && i2->second->last_tick <= idle_point) {
 	      i2->second->idle = true;
 	    }
@@ -1329,6 +1339,7 @@ namespace crimson {
 
       void update_client_res() {
           //int client_num = get_client_num() == 0 ? 1 : get_client_num();
+          assert(!client_map.empty() && total_wgt >= 1);
           for (auto c: client_map) {
               c.second->resource = system_capacity * c.second->info->weight / total_wgt;
           }
@@ -1398,11 +1409,13 @@ namespace crimson {
                           std::chrono::duration<Rep,Per> _erase_age,
                           std::chrono::duration<Rep,Per> _check_time,
                           double _system_capacity,
+                          double _mclock_win_size,
                           bool _allow_limit_break = false,
                           double _anticipation_timeout = 0.0) :
                 super(_client_info_f,
                       _idle_age, _erase_age, _check_time,
-                      _allow_limit_break, _anticipation_timeout)
+                      _allow_limit_break, _anticipation_timeout, _system_capacity,
+                      _mclock_win_size)
         {
             // empty
         }
@@ -1423,7 +1436,7 @@ namespace crimson {
 
         // pull convenience constructor
         PullPriorityQueue(typename super::ClientInfoFunc _client_info_f,
-                          double _system_capacity,
+                          double _system_capacity, double _mclock_win_size,
                           bool _allow_limit_break = false,
                           double _anticipation_timeout = 0.0) :
                 PullPriorityQueue(_client_info_f,
@@ -1431,6 +1444,7 @@ namespace crimson {
                                   std::chrono::minutes(15),
                                   std::chrono::minutes(6),
                                   _system_capacity,
+                                  _mclock_win_size,
                                   _allow_limit_break,
                                   _anticipation_timeout)
         {
@@ -1663,11 +1677,12 @@ namespace crimson {
                           std::chrono::duration<Rep,Per> _erase_age,
                           std::chrono::duration<Rep,Per> _check_time,
                           double _system_capacity,
+                          double _mclock_win_size,
                           bool _allow_limit_break = false,
                           double anticipation_timeout = 0.0) :
                 super(_client_info_f,
-                      _idle_age, _erase_age, _check_time, _system_capacity,
-                      _allow_limit_break, anticipation_timeout)
+                      _idle_age, _erase_age, _check_time, _allow_limit_break, anticipation_timeout,
+                      _system_capacity, _mclock_win_size)
         {
             can_handle_f = _can_handle_f;
             handle_f = _handle_f;
@@ -1697,6 +1712,7 @@ namespace crimson {
                           CanHandleRequestFunc _can_handle_f,
                           HandleRequestFunc _handle_f,
                           double _system_capacity,
+                          double _mclock_win_size,
                           bool _allow_limit_break = false,
                           double _anticipation_timeout = 0.0) :
                 PushPriorityQueue(_client_info_f,
@@ -1706,9 +1722,12 @@ namespace crimson {
                                   std::chrono::minutes(15),
                                   std::chrono::minutes(6),
                                   _system_capacity,
+                                  _mclock_win_size,
                                   _allow_limit_break,
                                   _anticipation_timeout)
         {
+            std::cout << 1733 << ": system capacity: " << _system_capacity << std::endl;
+            std::cout << 1731 << ": win_size: " << _mclock_win_size << std::endl;
             // empty
         }
 
@@ -1817,7 +1836,7 @@ namespace crimson {
 
       // data_mtx should be held when called
       void submit_request(typename super::HeapId heap_id) {
-	C client;
+	//C client;
 	switch(heap_id) {
 	case super::HeapId::reservation:
 	  // don't need to note client
@@ -1827,7 +1846,7 @@ namespace crimson {
 	  ++this->reserv_sched_count;
 	  break;
 	case super::HeapId::burst:
-	  client = submit_top_request(this->burst_heap, PhaseType::priority);
+      (void) submit_top_request(this->burst_heap, PhaseType::priority);
 //	  super::reduce_reservation_tags(client);
 	  ++this->prop_sched_count;
 	  break;

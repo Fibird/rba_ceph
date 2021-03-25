@@ -232,8 +232,9 @@ namespace ceph {
     mClockQueue(
       const typename dmc::PullPriorityQueue<K,T,true>::ClientInfoFunc& info_func,
       double system_capacity,
+      double mclock_win_size,
       double anticipation_timeout) :
-      queue(info_func, system_capacity, true, anticipation_timeout)
+      queue(info_func, system_capacity, mclock_win_size, true, anticipation_timeout)
     {
       // empty
     }

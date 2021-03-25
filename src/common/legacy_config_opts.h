@@ -1523,3 +1523,4 @@ OPTION(rgw_acl_grants_max_num, OPT_INT) // According to AWS S3(http://docs.aws.a
 
 /* rba fair configs */
 OPTION(osd_server_system_capacity, OPT_DOUBLE)
+OPTION(osd_mclock_win_size, OPT_DOUBLE)

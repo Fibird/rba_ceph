@@ -4895,6 +4895,9 @@ std::vector<Option> get_global_options() {
     Option("osd_server_system_capacity", Option::TYPE_FLOAT, Option::LEVEL_DEV)
             .set_default(3000.0)
             .set_description("set system capacity for osd server."),
+    Option("osd_mclock_win_size", Option::TYPE_FLOAT, Option::LEVEL_DEV)
+            .set_default(30.0)
+            .set_description("set mclock window size for rba."),
   });
 }
 
