@@ -381,8 +381,11 @@ set(GMOCK_INCLUDE_DIRS
 set(GTEST_INCLUDE_DIRS
   "${CMAKE_SOURCE_DIR}/src/googletest/googletest/include/gtest")
 
-include_directories("${CMAKE_SOURCE_DIR}/src/dmclock/src")
-include_directories("${CMAKE_SOURCE_DIR}/src/dmclock/support/src")
+#include_directories("${CMAKE_SOURCE_DIR}/src/dmclock/src")
+#include_directories("${CMAKE_SOURCE_DIR}/src/dmclock/support/src")
+
+include_directories("${CMAKE_SOURCE_DIR}/src/r2b_fair/src")
+include_directories("${CMAKE_SOURCE_DIR}/src/r2b_fair/support/src")
 
 # needed for source files that friend unit tests (e.g., using FRIEND_TEST)
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/src/googletest/googletest/include")
@@ -532,8 +535,10 @@ set(libcommon_files
   common/Cycles.cc
   common/scrub_types.cc
   common/bit_str.cc
-  dmclock/src/dmclock_util.cc
-  dmclock/support/src/run_every.cc
+  #dmclock/src/dmclock_util.cc
+  #dmclock/support/src/run_every.cc
+  r2b_fair/src/dmclock_util.cc
+  r2b_fair/support/src/run_every.cc
   osdc/Striper.cc
   osdc/Objecter.cc
   common/Graylog.cc
@@ -906,10 +911,14 @@ add_subdirectory(tools)
 
 # dmClock (after gmock)
 
-add_subdirectory(dmclock/src)
+#add_subdirectory(dmclock/src)
+add_subdirectory(r2b_fair/src)
 
-option(WITH_DMCLOCK_TESTS
-  "enable the build of dmclock-tests and dmclock-data-struct tests binaries"
+#option(WITH_DMCLOCK_TESTS
+ # "enable the build of dmclock-tests and dmclock-data-struct tests binaries"
+ # OFF)
+option(WITH_R2BFAIR_TESTS
+  "enable the build of r2bfair-tests and r2bfair-data-struct tests binaries"
   OFF)
 if(WITH_TESTS AND WITH_DMCLOCK_TESTS)
   # note: add_test is not being called, so dmclock tests aren't part
@@ -917,6 +926,13 @@ if(WITH_TESTS AND WITH_DMCLOCK_TESTS)
   add_subdirectory(dmclock/test)
   add_subdirectory(dmclock/support/test)
 endif(WITH_TESTS AND WITH_DMCLOCK_TESTS)
+
+if(WITH_TESTS AND WITH_R2BFAIR_TESTS)
+  # note: add_test is not being called, so dmclock tests aren't part
+  # of ceph tests
+  add_subdirectory(r2b_fair/test)
+  add_subdirectory(r2b_fair/support/test)
+endif(WITH_TESTS AND WITH_R2BFAIR_TESTS)
 
 if(HAVE_INTEL AND HAVE_BETTER_YASM_ELF64 AND (NOT APPLE))
   add_subdirectory(crypto/isa-l)
