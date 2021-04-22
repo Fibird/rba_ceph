@@ -52,3 +52,6 @@
 [submodule "src/rapidjson"]
 	path = src/rapidjson
 	url = https://github.com/ceph/rapidjson
+[submodule "src/r2b_fair"]
+	path = src/r2b_fair
+	url = https://github.com/Fibird/r2b_fair.git

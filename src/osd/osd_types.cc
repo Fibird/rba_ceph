@@ -1965,7 +1965,7 @@ pg_pool_t::pg_pool_t() :
   qos_res(OSD_POOL_DEFAULT_MCLOCK_RES),
   qos_wgt(OSD_POOL_DEFAULT_MCLOCK_WGT),
   qos_lim(OSD_POOL_DEFAULT_MCLOCK_LIM),
-  qos_ctype(OSD_POOL_DEFALUT_MCLOCK_CTYPE)
+  qos_ctype(OSD_POOL_DEFAULT_MCLOCK_CTYPE)
 { }
 
 ostream& operator<<(ostream& out, const pg_pool_t& p)
@@ -2032,7 +2032,7 @@ ostream& operator<<(ostream& out, const pg_pool_t& p)
   }
   out << " qos_res " << p.get_qos_res()
       << " qos_wgt " << p.get_qos_wgt()
-      << " qos_lim " << p.get_qos_lim();
+      << " qos_lim " << p.get_qos_lim()
       << " qos_ctype " << p.get_qos_ctype();
   return out;
 }

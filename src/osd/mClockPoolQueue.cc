@@ -35,7 +35,7 @@ namespace ceph {
    */
 
   mClockPoolQueue::mClockPoolQueue(CephContext *cct) :
-    queue(std::bind(&mClockPoolQueue::op_class_client_info_f, this, _1)),
+    queue(std::bind(&mClockPoolQueue::op_class_client_info_f, this, _1), cct->_conf->osd_server_system_capacity, cct->_conf->osd_mclock_win_size, 0.0),
     client_info_mgr(cct),
     service(nullptr)
   {
@@ -63,7 +63,7 @@ namespace ceph {
 	dmc::ClientInfo *client_info = new dmc::ClientInfo(pp->get_qos_res(),
 							   pp->get_qos_wgt(),
 							   pp->get_qos_lim(),
-							   pp->get_qos_ctype());
+							   dmc::ClientType(pp->get_qos_ctype()));
 	client_info_mgr.cli_info_map[client.first] = client_info;
 	return client_info;
       }

@@ -23,7 +23,8 @@
 #include "common/Formatter.h"
 #include "common/OpQueue.h"
 
-#include "dmclock/src/dmclock_server.h"
+//#include "dmclock/src/dmclock_server.h"
+#include "r2b_fair/src/dmclock_server.h"
 
 // the following is done to unclobber _ASSERT_H so it returns to the
 // way ceph likes it
@@ -225,6 +226,16 @@ namespace ceph {
       const typename dmc::PullPriorityQueue<K,T,true>::ClientInfoFunc& info_func,
       double anticipation_timeout = 0.0) :
       queue(info_func, true, anticipation_timeout)
+    {
+      // empty
+    }
+
+    mClockQueue(
+      const typename dmc::PullPriorityQueue<K,T,true>::ClientInfoFunc& info_func,
+      double system_capacity,
+      double mclock_win_size,
+      double anticipation_timeout) :
+      queue(info_func, system_capacity, mclock_win_size, true, anticipation_timeout)
     {
       // empty
     }

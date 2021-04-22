@@ -37,6 +37,7 @@ namespace crimson {
       double client_reservation;
       double client_limit;
       double client_weight;
+      int client_type;
 
       cli_group_t(uint _client_count = 100,
 		  uint _client_wait = 0,
@@ -46,7 +47,8 @@ namespace crimson {
 		  uint _client_outstanding_ops = 100,
 		  double _client_reservation = 20.0,
 		  double _client_limit = 60.0,
-		  double _client_weight = 1.0) :
+		  double _client_weight = 1.0,
+		  int _client_type = 0) :
 	client_count(_client_count),
 	client_wait(std::chrono::seconds(_client_wait)),
 	client_total_ops(_client_total_ops),
@@ -55,7 +57,8 @@ namespace crimson {
 	client_outstanding_ops(_client_outstanding_ops),
 	client_reservation(_client_reservation),
 	client_limit(_client_limit),
-	client_weight(_client_weight)
+	client_weight(_client_weight),
+	client_type(_client_type)
       {
 	// empty
       }
@@ -72,7 +75,8 @@ namespace crimson {
 	  std::fixed << std::setprecision(1) <<
 	  "client_reservation = " << cli_group.client_reservation << "\n" <<
 	  "client_limit = " << cli_group.client_limit << "\n" <<
-	  "client_weight = " << cli_group.client_weight;
+	  "client_weight = " << cli_group.client_weight << "\n" <<
+	  "client_type = " << cli_group.client_type;
 	return out;
       }
     }; // class cli_group_t
@@ -110,6 +114,8 @@ namespace crimson {
       bool server_random_selection;
       bool server_soft_limit;
       double anticipation_timeout;
+      double system_capacity;
+      double mclock_win_size;
 
       std::vector<cli_group_t> cli_group;
       std::vector<srv_group_t> srv_group;
@@ -118,12 +124,16 @@ namespace crimson {
 		   uint _client_groups = 1,
 		   bool _server_random_selection = false,
 		   bool _server_soft_limit = true,
-		   double _anticipation_timeout = 0.0) :
+		   double _anticipation_timeout = 0.0,
+		   double _system_capacity = 40,
+		   double _mclock_win_size = 30):
 	server_groups(_server_groups),
 	client_groups(_client_groups),
 	server_random_selection(_server_random_selection),
 	server_soft_limit(_server_soft_limit),
-	anticipation_timeout(_anticipation_timeout)
+	anticipation_timeout(_anticipation_timeout),
+	system_capacity(_system_capacity),
+	mclock_win_size(_mclock_win_size)
       {
 	srv_group.reserve(server_groups);
 	cli_group.reserve(client_groups);
@@ -137,7 +147,9 @@ namespace crimson {
 	  "server_random_selection = " << sim_config.server_random_selection << "\n" <<
 	  "server_soft_limit = " << sim_config.server_soft_limit << "\n" <<
 	  std::fixed << std::setprecision(3) << 
-	  "anticipation_timeout = " << sim_config.anticipation_timeout;
+	  "anticipation_timeout = " << sim_config.anticipation_timeout << "\n" <<
+	  "system_capacity = " << sim_config.system_capacity << "\n" <<
+	  "mclock_win_size = " << sim_config.mclock_win_size;
 	return out;
       }
     }; // class sim_config_t

@@ -2198,6 +2198,17 @@ std::vector<Option> get_global_options() {
     .add_see_also("osd_op_queue_mclock_anticipation_timeout")
     .add_see_also("objecter_mclock_service_tracker"),
 
+    Option("osd_pool_default_mclock_ctype", Option::TYPE_INT, Option::LEVEL_ADVANCED)
+    .set_default(2)
+    .set_description("mclock client type of the pool operator requests")
+    .set_long_description("mclock client type of the pool operator requests when osd_op_queue is 'mclock_pool'; client type has R(0), B(1), A(2)")
+    .add_see_also("osd_op_queue")
+    .add_see_also("osd_pool_default_mclock_res")
+    .add_see_also("osd_pool_default_mclock_wgt")
+    .add_see_also("osd_pool_default_mclock_lim")
+    .add_see_also("osd_op_queue_mclock_anticipation_timeout")
+    .add_see_also("objecter_mclock_service_tracker"),
+
     Option("osd_hit_set_min_size", Option::TYPE_INT, Option::LEVEL_ADVANCED)
     .set_default(1000)
     .set_description(""),
@@ -4880,6 +4891,13 @@ std::vector<Option> get_global_options() {
     Option("debug_asserts_on_shutdown", Option::TYPE_BOOL,Option::LEVEL_DEV)
     .set_default(false)
     .set_description("Enable certain asserts to check for refcounting bugs on shutdown; see http://tracker.ceph.com/issues/21738"),
+
+    Option("osd_server_system_capacity", Option::TYPE_FLOAT, Option::LEVEL_DEV)
+            .set_default(3000.0)
+            .set_description("set system capacity for osd server."),
+    Option("osd_mclock_win_size", Option::TYPE_FLOAT, Option::LEVEL_DEV)
+            .set_default(30.0)
+            .set_description("set mclock window size for rba."),
   });
 }
 

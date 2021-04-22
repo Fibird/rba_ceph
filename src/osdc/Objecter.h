@@ -25,7 +25,8 @@
 
 #include <boost/thread/shared_mutex.hpp>
 
-#include "dmclock/src/dmclock_client.h"
+//#include "dmclock/src/dmclock_client.h"
+#include "r2b_fair/src/dmclock_client.h"
 
 #include "include/assert.h"
 #include "include/buffer.h"

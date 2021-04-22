@@ -3673,6 +3673,7 @@ int OSDMap::build_simple_optioned(CephContext *cct, epoch_t e, uuid_d &fsid,
       pools[pool].qos_res = cct->_conf->get_val<double>("osd_pool_default_mclock_res");
       pools[pool].qos_wgt = cct->_conf->get_val<double>("osd_pool_default_mclock_wgt");
       pools[pool].qos_lim = cct->_conf->get_val<double>("osd_pool_default_mclock_lim");
+      pools[pool].qos_ctype = cct->_conf->get_val<int64_t>("osd_pool_default_mclock_ctype");
       pool_name[pool] = plname;
       name_pool[plname] = pool;
     }
